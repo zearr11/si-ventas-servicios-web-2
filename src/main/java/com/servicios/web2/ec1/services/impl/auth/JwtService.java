@@ -8,6 +8,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import java.util.Date;
 
@@ -20,12 +22,18 @@ public class JwtService implements IJwtService {
     private static final int ACCESS_TOKEN_DURATION = 86400000; // 1 DIA
 
     @Override
-    public String generateAccessToken(Usuario usuario) {
+    public String generateAccessToken(UserDetails usuario) {
         return Jwts.builder()
                 .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()), SignatureAlgorithm.HS256)
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setSubject(usuario.getUsername())
-                .claim("role", "ROLE_" + usuario.getRol().name())
+                .claim("role", usuario.getAuthorities()
+                        .stream()
+                        .findFirst()
+                        .map(GrantedAuthority::getAuthority)
+                        .orElseThrow(() ->
+                                new RuntimeException("Error con asignación de role al generar access token.")
+                        ))
                 .claim("token_type", "access")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(
@@ -41,7 +49,7 @@ public class JwtService implements IJwtService {
     }
 
     @Override
-    public boolean isTokenValid(String token, Usuario usuario) {
+    public boolean isTokenValid(String token, UserDetails usuario) {
         String username = extractSubject(token);
         return (username.equals(usuario.getUsername())
                 && !isTokenExpired(token));

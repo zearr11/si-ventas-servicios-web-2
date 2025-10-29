@@ -2,6 +2,7 @@ package com.servicios.web2.ec1.utils.components;
 
 import com.servicios.web2.ec1.models.Usuario;
 import com.servicios.web2.ec1.repositories.UsuarioRepository;
+import com.servicios.web2.ec1.services.impl.CustomUserDetailsService;
 import com.servicios.web2.ec1.services.interfaces.auth.IJwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
@@ -19,14 +21,12 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final IJwtService jwtService;
-    private final UsuarioRepository userRepository;
+    private final CustomUserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(IJwtService jwtService,
-                                   UsuarioRepository userRepository) {
+    public JwtAuthenticationFilter(IJwtService jwtService, CustomUserDetailsService userDetailsService) {
         this.jwtService = jwtService;
-        this.userRepository = userRepository;
+        this.userDetailsService = userDetailsService;
     }
-
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -46,18 +46,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         username = jwtService.extractSubject(jwt);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Usuario usuario = userRepository.findByUsername(username)
-                    .orElse(null);
+            UserDetails usuario = userDetailsService.loadUserByUsername(username);
 
             if (usuario != null
                     && jwtService.isTokenValid(jwt, usuario)
                     && jwtService.isAccessToken(jwt)) {
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
-                                usuario, null,
-                                List.of(
-                                        new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())
-                                )
+                                usuario,
+                                null,
+                                usuario.getAuthorities()
                         );
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }

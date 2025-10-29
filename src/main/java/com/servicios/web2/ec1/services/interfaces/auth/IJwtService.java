@@ -1,13 +1,13 @@
 package com.servicios.web2.ec1.services.interfaces.auth;
 
-import com.servicios.web2.ec1.models.Usuario;
 import io.jsonwebtoken.Claims;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public interface IJwtService {
 
-    String generateAccessToken(Usuario usuario);
+    String generateAccessToken(UserDetails usuario);
     String extractSubject(String token);
-    boolean isTokenValid(String token, Usuario usuario);
+    boolean isTokenValid(String token, UserDetails usuario);
     boolean isAccessToken(String token);
     Claims extractAllClaims(String token);
     boolean isTokenExpired(String token);

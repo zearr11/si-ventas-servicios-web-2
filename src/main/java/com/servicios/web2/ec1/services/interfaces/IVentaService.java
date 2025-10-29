@@ -10,7 +10,7 @@ public interface IVentaService {
     VentaResponse obtenerVentaPorId(Long id);
     List<VentaResponse> listarVentas();
     MensajeResponse crearVenta(VentaRequest venta);
-    MensajeResponse modificarVenta(Long id, VentaRequest venta);
-    MensajeResponse eliminarVentaPorId(Long id);
+    // MensajeResponse modificarVenta(Long id, VentaRequest venta);
+    // MensajeResponse eliminarVentaPorId(Long id);
 
 }

@@ -3,6 +3,7 @@ package com.servicios.web2.ec1.services.impl;
 import com.servicios.web2.ec1.models.*;
 import com.servicios.web2.ec1.repositories.*;
 import com.servicios.web2.ec1.services.interfaces.IVentaService;
+import com.servicios.web2.ec1.services.interfaces.auth.IAuthService;
 import com.servicios.web2.ec1.utils.dtos.request.DetalleVentaRequest;
 import com.servicios.web2.ec1.utils.dtos.request.VentaRequest;
 import com.servicios.web2.ec1.utils.dtos.response.MensajeResponse;
@@ -22,17 +23,20 @@ public class VentaService implements IVentaService {
     private final ClienteRepository clienteRepository;
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
+    private final IAuthService authService;
 
     public VentaService(VentaRepository ventaRepository,
                         DetalleVentaRepository detalleVentaRepository,
                         ClienteRepository clienteRepository,
                         UsuarioRepository usuarioRepository,
-                        ProductoRepository productoRepository) {
+                        ProductoRepository productoRepository,
+                        IAuthService authService) {
         this.ventaRepository = ventaRepository;
         this.detalleVentaRepository = detalleVentaRepository;
         this.clienteRepository = clienteRepository;
         this.usuarioRepository = usuarioRepository;
         this.productoRepository = productoRepository;
+        this.authService = authService;
     }
 
     @Override
@@ -76,21 +80,18 @@ public class VentaService implements IVentaService {
     public MensajeResponse crearVenta(VentaRequest venta) {
 
         Optional<Cliente> cliente = clienteRepository.findById(venta.getIdCliente());
-        Optional<Usuario> usuario = usuarioRepository.findById(venta.getIdUsuario());
+        Usuario usuario = authService.obtenerUsuarioAutenticado();
         List<DetalleVentaRequest> detallesVenta = venta.getDetalleVenta();
 
         if (cliente.isEmpty())
             return new MensajeResponse("Cliente con id " + venta.getIdCliente() + " no existe.");
-
-        if (usuario.isEmpty())
-            return new MensajeResponse("Usuario con id " + venta.getIdUsuario() + " no existe.");
 
         if (detallesVenta.isEmpty())
             return new MensajeResponse("Debe agregarse el detalle de venta.");
 
         Venta ventaToSave = Venta.builder()
                 .cliente(cliente.get())
-                .usuario(usuario.get())
+                .usuario(usuario)
                 .fecha(LocalDateTime.now())
                 .total(0.00)
                 .build();
@@ -132,6 +133,7 @@ public class VentaService implements IVentaService {
         return new MensajeResponse("Venta registrada satisfactoriamente.");
     }
 
+    /*
     @Transactional
     @Override
     public MensajeResponse modificarVenta(Long id, VentaRequest venta) {
@@ -224,5 +226,5 @@ public class VentaService implements IVentaService {
 
         return new MensajeResponse("Venta eliminada satisfactoriamente.");
     }
-
+    */
 }

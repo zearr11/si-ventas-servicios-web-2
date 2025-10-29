@@ -11,7 +11,6 @@ import java.util.List;
 public class VentaRequest {
 
     private Long idCliente;
-    private Long idUsuario;
     private List<DetalleVentaRequest> detalleVenta;
 
 }

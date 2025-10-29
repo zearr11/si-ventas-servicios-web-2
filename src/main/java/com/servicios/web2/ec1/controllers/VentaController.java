@@ -37,6 +37,7 @@ public class VentaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ventaService.crearVenta(venta));
     }
 
+    /*
     // http://localhost:8080/api/v1/ventas/?
     @PutMapping("/{id}")
     public ResponseEntity<MensajeResponse> actualizarVenta(@PathVariable Long id,
@@ -49,5 +50,5 @@ public class VentaController {
     public ResponseEntity<MensajeResponse> eliminarVenta(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(ventaService.eliminarVentaPorId(id));
     }
-
+    */
 }

@@ -32,18 +32,75 @@ public class SecurityConfig {
     @Value("${app.prefix}")
     private String appPrefix;
 
-    /*
-    private final String[] PUBLIC_ENDPOINTS = new String[] {
-            appPrefix + "/auth",
-    };
-    */
-
     public SecurityConfig(JwtAuthenticationFilter authenticationFilter,
                           CustomUserDetailsService userDetailsService) {
         this.authenticationFilter = authenticationFilter;
         this.userDetailsService = userDetailsService;
     }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        // Acceso JWT
+                        .requestMatchers(appPrefix + "/auth").permitAll()
+
+                        // Categorías
+                        .requestMatchers(HttpMethod.GET, appPrefix + "/categorias/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.POST, appPrefix + "/categorias/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.PUT, appPrefix + "/categorias/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.DELETE, appPrefix + "/categorias/**").hasRole(Rol.ADMIN.name())
+
+                        // Clientes
+                        .requestMatchers(HttpMethod.GET, appPrefix + "/clientes/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name())
+                        .requestMatchers(HttpMethod.POST, appPrefix + "/clientes/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name())
+                        .requestMatchers(HttpMethod.PUT, appPrefix + "/clientes/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name())
+                        .requestMatchers(HttpMethod.DELETE, appPrefix + "/clientes/**").hasRole(Rol.ADMIN.name())
+
+                        // Productos
+                        .requestMatchers(HttpMethod.GET, appPrefix + "/productos/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.POST, appPrefix + "/productos/**").hasAnyRole(Rol.ADMIN.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.PUT, appPrefix + "/productos/**").hasAnyRole(Rol.ADMIN.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.DELETE, appPrefix + "/productos/**").hasRole(Rol.ADMIN.name())
+
+                        // Usuarios
+                        .requestMatchers(appPrefix + "/usuarios/**").hasRole(Rol.ADMIN.name())
+
+                        // Ventas
+                        .requestMatchers(HttpMethod.GET, appPrefix + "/ventas/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name(), Rol.ALMACENERO.name())
+                        .requestMatchers(HttpMethod.POST, appPrefix + "/ventas/**").hasAnyRole(Rol.ADMIN.name(), Rol.SUPERVISOR.name(), Rol.VENDEDOR.name())
+
+                        // Cualquier otro requiere autenticación
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    /*
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -66,23 +123,6 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+    */
 
 }
