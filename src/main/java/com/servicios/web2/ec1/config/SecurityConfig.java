@@ -2,9 +2,11 @@ package com.servicios.web2.ec1.config;
 
 import com.servicios.web2.ec1.services.impl.CustomUserDetailsService;
 import com.servicios.web2.ec1.utils.components.JwtAuthenticationFilter;
+import com.servicios.web2.ec1.utils.enums.Rol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -48,6 +50,13 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth").permitAll()
+                        .requestMatchers("/api/v1/ventas").hasRole(Rol.CAJERO.name())
+                        .requestMatchers(HttpMethod.POST, "/api/v1/productos")
+                        .hasRole(Rol.REPONEDOR.name())
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/productos")
+                        .hasRole(Rol.REPONEDOR.name())
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/productos")
+                        .hasRole(Rol.REPONEDOR.name())
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
