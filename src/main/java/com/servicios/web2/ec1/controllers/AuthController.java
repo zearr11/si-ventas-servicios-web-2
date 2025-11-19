@@ -5,6 +5,7 @@ import com.servicios.web2.ec1.utils.dtos.request.AuthRequest;
 import com.servicios.web2.ec1.utils.dtos.response.AuthResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +23,14 @@ public class AuthController {
 
     @PostMapping
     public ResponseEntity<AuthResponse> auth(@RequestBody AuthRequest request) {
-        return ResponseEntity.status(HttpStatus.OK).body(authService.login(request));
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(authService.login(request));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthResponse.builder()
+                    .mensaje("Credenciales inválidas.")
+                    .build()
+            );
+        }
     }
 
 }

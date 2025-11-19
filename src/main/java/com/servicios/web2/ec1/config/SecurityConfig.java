@@ -6,10 +6,11 @@ import com.servicios.web2.ec1.utils.enums.Rol;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -39,10 +40,14 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Order(3)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .securityMatcher(appPrefix + "/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // .requestMatchers(HttpMethod.GET, "/oauth2-prueba").hasAuthority("SCOPE_api.read")
+
                         // Acceso JWT
                         .requestMatchers(appPrefix + "/auth").permitAll()
 
@@ -74,9 +79,25 @@ public class SecurityConfig {
                         // Cualquier otro requiere autenticación
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling.accessDeniedHandler((request,
+                                                               response,
+                                                               accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            String json = "{"
+                                    + "\"error\":\"Acceso denegado\","
+                                    + "\"mensaje\":\"No tiene permisos para solicitar este recurso.\","
+                                    + "\"status\":403"
+                                    + "}";
+                            response.getWriter().write(json);
+                            response.getWriter().flush();
+                        })
+                )
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(Customizer.withDefaults())
                 .build();
@@ -99,30 +120,5 @@ public class SecurityConfig {
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
-
-    /*
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth").permitAll()
-                        .requestMatchers("/api/v1/ventas").hasRole(Rol.CAJERO.name())
-                        .requestMatchers(HttpMethod.POST, "/api/v1/productos")
-                        .hasRole(Rol.REPONEDOR.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/productos")
-                        .hasRole(Rol.REPONEDOR.name())
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/productos")
-                        .hasRole(Rol.REPONEDOR.name())
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(authenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class)
-                .httpBasic(Customizer.withDefaults())
-                .build();
-    }
-    */
 
 }

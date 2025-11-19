@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public interface IJwtService {
 
     String generateAccessToken(UserDetails usuario);
+    String extractAlgFromHeader(String token);
     String extractSubject(String token);
     boolean isTokenValid(String token, UserDetails usuario);
     boolean isAccessToken(String token);

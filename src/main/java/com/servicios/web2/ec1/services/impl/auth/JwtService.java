@@ -1,6 +1,7 @@
 package com.servicios.web2.ec1.services.impl.auth;
 
-import com.servicios.web2.ec1.models.Usuario;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.servicios.web2.ec1.services.interfaces.auth.IJwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import java.util.Base64;
 import java.util.Date;
 
 @Service
@@ -41,6 +43,22 @@ public class JwtService implements IJwtService {
                 ))
                 .compact();
     }
+
+    @Override
+    public String extractAlgFromHeader(String token) {
+        try {
+            String header = token.split("\\.")[0];
+            String json = new String(Base64.getUrlDecoder().decode(header));
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(json);
+
+            return node.get("alg").asText();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
 
     @Override
     public String extractSubject(String token) {

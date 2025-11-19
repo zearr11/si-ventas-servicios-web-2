@@ -37,13 +37,14 @@ public class AuthService implements IAuthService {
 
     @Override
     public AuthResponse login(AuthRequest request) {
-
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
 
-        return new AuthResponse(jwtService.generateAccessToken(userDetails));
+        return AuthResponse.builder()
+                .accessToken(jwtService.generateAccessToken(userDetails))
+                .build();
     }
 
     @Override
